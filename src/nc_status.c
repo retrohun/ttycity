@@ -54,18 +54,24 @@ nc_draw_status(SimView *view)
       cols - 1);
   }
 
-  /* horizontal scroll marker: a white thumb on this black bar, spanning the
-   * editor's x-range; chgat recolors so any text stays readable under it */
+  /* horizontal scroll marker: grey bar across the editor's x-range, matching
+   * the toolbar and the vertical scrollbar; thumb is the same bar reversed.
+   * chgat only recolors so status text stays readable underneath.  Also
+   * fills the bottom-left corner under the toolbar, which stops one row
+   * short (rows - 2) to leave this line for status text -- without this
+   * the corner shows the terminal's default background instead of grey. */
   {
     int vt = EdW / Gfx->tilew, sl, sx;
+    short pair = NC_MONO ? 0 : NC_PAIR(COLOR_BLACK, COLOR_WHITE);
 
     if (vt < 1) vt = 1;
+    if (EdLeft > 0) mvchgat(rows - 1, 0, EdLeft, A_NORMAL, pair, NULL);
+    if (EdW > 1) mvchgat(rows - 1, EdLeft, EdW, A_NORMAL, pair, NULL);
     if (vt < WORLD_X && EdW > 1) {
       sl = EdW * vt / WORLD_X;
       if (sl < 1) sl = 1;
       sx = EdLeft + (EdW - sl) * ViewPanX / (WORLD_X - vt);
-      mvchgat(rows - 1, sx, sl, NC_MONO ? A_REVERSE : A_NORMAL,
-	      NC_MONO ? 0 : NC_PAIR(COLOR_BLACK, COLOR_WHITE), NULL);
+      mvchgat(rows - 1, sx, sl, A_REVERSE, pair, NULL);
     }
   }
 }

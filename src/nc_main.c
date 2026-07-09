@@ -414,7 +414,7 @@ main(int argc, char *argv[])
   mouseinterval(0);			/* act on press; no click-resolve delay */
 #endif
   if (!gfxname)
-    nc_gfx_auto();		/* mono -> ascii, UTF-8 emulator -> unicode */
+    nc_gfx_auto();		/* dumb -> ascii, no color -> mono, UTF-8 emulator -> unicode */
   nc_colors_init();
 
   env_init();

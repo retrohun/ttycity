@@ -19,7 +19,7 @@
  *   aa       2 cols/tile, rendered through the real aalib, in color.  Lives
  *            in nc_aa.c and is compiled in only by `make aalib` (libaa is
  *            rare); otherwise its avail() fails and the mode is skipped.
- *   acs      1 col/tile, ascii's mono rules (bold/reverse only, no color)
+ *   mono     1 col/tile, ascii's mono rules (bold/reverse only, no color)
  *            but real ACS box-drawing for roads/rails/wires instead of the
  *            +/-/| approximation.
  *
@@ -590,7 +590,7 @@ as_cursor(int sy, int sx, int mx, int my)
   mvaddch(sy, sx, (as_cell(mx, my) ^ A_REVERSE) | A_UNDERLINE);
 }
 
-/* ==================== acs mode (1 col/tile, monochrome ACS lines) ========= */
+/* ==================== mono mode (1 col/tile, monochrome ACS lines) ======== */
 
 /* Same as as_cell, but roads/rails/wires draw real ACS box-drawing
  * (nc_line_glyph, the same auto-tiler the "color" mode uses)
@@ -698,11 +698,11 @@ static struct GfxOps GfxUnicode =
   { "unicode", 2, 1, 0, uni_avail, uni_tile, uni_sprite, uni_cursor };
 static struct GfxOps GfxAscii =
   { "ascii",   1, 0, 1, NULL,      as_tile,  as_sprite,  as_cursor  };
-static struct GfxOps GfxAcs =
-  { "acs",     1, 0, 1, NULL,      ln_tile,  as_sprite,  ln_cursor  };
+static struct GfxOps GfxMono =
+  { "mono",    1, 0, 1, NULL,      ln_tile,  as_sprite,  ln_cursor  };
 
 /* future: braille microtiles */
-static struct GfxOps *modes[] = { &GfxDefault, &GfxUnicode, &GfxAscii, &GfxAA, &GfxAcs };
+static struct GfxOps *modes[] = { &GfxDefault, &GfxUnicode, &GfxAscii, &GfxAA, &GfxMono };
 #define NMODES ((int)(sizeof(modes) / sizeof(modes[0])))
 
 struct GfxOps *Gfx = &GfxDefault;
@@ -716,7 +716,7 @@ nc_gfx_set(char *name)
   if (!name) return 0;
   if (!strcmp(name, "default") || !strcmp(name, "standard")) name = "color";
   if (!strcmp(name, "emoji")) name = "unicode";
-  if (!strcmp(name, "vt100") || !strcmp(name, "mono") ||
+  if (!strcmp(name, "vt100") ||
       !strcmp(name, "bw") || !strcmp(name, "7bit")) name = "ascii";
   if (!strcmp(name, "aalib") || !strcmp(name, "aa-lib")) name = "aa";
   for (i = 0; i < NMODES; i++) {
@@ -750,9 +750,13 @@ nc_gfx_list(FILE *f)
 
 /* Pick a startup mode from the environment when no -gfx flag was given; runs
  * after initscr() so has_colors() reflects the real terminfo entry.
- *   no color      -> ascii    vt100/vt220/dumb/xterm-mono, real DEC iron, the
- *                             OpenBSD console: no color capability, and the
- *                             7-bit mode is the only safe bet there anyway.
+ *   TERM=dumb     -> ascii    piped output, CI logs, or a genuinely minimal
+ *                             terminal -- assume nothing beyond plain chars,
+ *                             not even reliable ACS line-drawing.
+ *   no color      -> mono     vt100/vt220/xterm-mono, real DEC iron, the
+ *                             OpenBSD console: no color, but ACS line-drawing
+ *                             still works there -- ncurses substitutes ASCII
+ *                             automatically when a terminal's acsc is missing.
  *   modern + UTF-8-> unicode  needs emoji fonts, not just a UTF-8 locale, so
  *                             ask for an emulator-class TERM ("256color") or
  *                             COLORTERM=truecolor|24bit (kitty, alacritty,
@@ -768,8 +772,12 @@ nc_gfx_auto(void)
   char *term = getenv("TERM");
   char *ct = getenv("COLORTERM");
 
-  if (!has_colors()) {
+  if (term && !strcmp(term, "dumb")) {
     nc_gfx_set("ascii");
+    return;
+  }
+  if (!has_colors()) {
+    nc_gfx_set("mono");
     return;
   }
   if ((term && strstr(term, "256color")) ||

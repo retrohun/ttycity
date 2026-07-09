@@ -76,7 +76,7 @@ nc_transit_mask(int x, int y, int cls)
 }
 
 /* Line-drawing glyph chosen from the four same-class neighbors.  Exported
- * (nc_line_glyph) so the "acs" mono mode can reuse the same auto-tiling. */
+ * (nc_line_glyph) so the "mono" mode can reuse the same auto-tiling. */
 chtype
 nc_line_glyph(int x, int y, int cls)
 {
@@ -505,7 +505,8 @@ nc_draw_editor(SimView *view)
 
   nc_draw_sprites();			/* moving objects over the tile layer */
 
-  /* vertical scroll marker: white thumb in the black right-edge gutter */
+  /* vertical scroll marker: grey gutter matching the toolbar, thumb is the
+   * same grey reversed so it always contrasts (color or mono). */
   sx = EdLeft + EdW;
   if (sx < cols) {
     int t0 = 0, tl = EdH;
@@ -515,8 +516,8 @@ nc_draw_editor(SimView *view)
       t0 = (EdH - tl) * ViewPanY / (WORLD_Y - EdH);
     }
     for (sy = 0; sy < EdH; sy++) {
-      attrset((sy >= t0 && sy < t0 + tl) ? NC_MSEL(NC_CP(COLOR_BLACK, COLOR_WHITE))
-					 : NC_CP(COLOR_WHITE, COLOR_BLACK));
+      attrset(NC_CP(COLOR_BLACK, COLOR_WHITE) |
+	      ((sy >= t0 && sy < t0 + tl) ? A_REVERSE : 0));
       mvaddch(EdTop + sy, sx, ' ');
     }
     attrset(A_NORMAL);

@@ -294,20 +294,22 @@ nc_menu_draw(int cols)
   int glen = (int)strlen(gname);
 
   /* menu bar */
-  attrset(NC_CP(COLOR_BLACK, COLOR_WHITE));
+  attrset(NC_MSEL(NC_CP(COLOR_BLACK, COLOR_WHITE)));
   for (i = 0; i < cols; i++) mvaddch(0, i, ' ');
   x = 1;
   for (i = 0; i < NMENUS; i++) {
     int hot = (MenuOpen == i);
-    attrset(hot ? NC_MSEL(NC_CP(COLOR_WHITE, COLOR_BLUE) | A_BOLD)
-		: NC_CP(COLOR_BLACK, COLOR_WHITE));
+    /* | A_BOLD outside NC_MSEL: keeps the open title distinct from the
+     * now-reversed bar in mono (plain reverse) too, not just in color. */
+    attrset(hot ? (NC_MSEL(NC_CP(COLOR_WHITE, COLOR_BLUE) | A_BOLD) | A_BOLD)
+		: NC_MSEL(NC_CP(COLOR_BLACK, COLOR_WHITE)));
     mvaddch(0, x, ' ');
     mvaddstr(0, x + 1, menus[i].title);
     addch(' ');
     x += (int)strlen(menus[i].title) + 3;
   }
   /* current -gfx mode, top right */
-  attrset(NC_CP(COLOR_BLACK, COLOR_WHITE));
+  attrset(NC_MSEL(NC_CP(COLOR_BLACK, COLOR_WHITE)));
   if (cols - glen - 1 > x) mvaddstr(0, cols - glen - 1, gname);
   attrset(A_NORMAL);
 
