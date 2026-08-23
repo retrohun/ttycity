@@ -4,6 +4,8 @@ A port of [Micropolis Activity](https://github.com/SimHacker/micropolis/tree/mas
 
 ![ttycity](ttycity.png)
 
+You may also like [vtcity](https://github.com/tenox7/vtcity) — the same game for real DEC VT terminals, with pixel-exact original tile graphics via DRCS soft fonts.
+
 ## Running
 
 All assets (scenarios, cities) are baked into the binary — no external files needed.
